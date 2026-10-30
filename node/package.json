@@ -1,0 +1,14 @@
+{
+  "name": "hydronode-sdk",
+  "version": "1.0.0",
+  "description": "Send signed sensor readings to HydroNode from Node.js, Deno or Bun. No dependencies.",
+  "type": "module",
+  "main": "hydronode.mjs",
+  "exports": "./hydronode.mjs",
+  "engines": { "node": ">=18" },
+  "scripts": { "test": "node --test test.mjs" },
+  "license": "MIT",
+  "repository": "github:TexhFexLabs/hydronode-sdk",
+  "homepage": "https://hydronode.tech/docs/guide/sdk/",
+  "keywords": ["hydronode", "iot", "sensor", "hmac", "raspberry-pi", "gateway"]
+}
