@@ -107,6 +107,21 @@ shows which) and then calls your handler:
 hydro.on("pump", lambda ms: run_pump(min(ms, 10000)), "UINT32")
 ```
 
+**Switches and choices.** HydroNode shows every value you send as a data point. Read it as on/off or as
+a choice in the web app and bind a command to it: the app and Home Assistant then show a switch or a
+picker. Register the command with its type and send back the state the hardware really took:
+
+```python
+hydro.on("heater_mode", set_mode, "UINT32")   # a choice arrives as the option index
+hydro.on("pump", set_pump, "BOOL")            # on/off
+hydro.send_values({"HEATER_MODE": mode, "PUMP": 1 if pump_on else 0})
+```
+
+The same works in JavaScript (`hydro.on("pump", fn, "BOOL")`) and Go (`client.On("pump", "BOOL", fn)`).
+HydroNode shows a change as *Pending* until the device confirms the command or reports a matching
+value. Handlers run inside the send call, so report the new state with the next send, not from inside
+the handler. Full example: [`python/examples/choice_and_state.py`](python/examples/choice_and_state.py).
+
 ## How the signature works
 
 ```
@@ -138,6 +153,7 @@ backend's `SignatureVectorsTest`; do not edit it by hand.
 | [`python/examples/send_once.py`](python/examples/send_once.py) | The smallest complete program |
 | [`python/examples/raspberry_pi_offline_safe.py`](python/examples/raspberry_pi_offline_safe.py) | Raspberry Pi loop that never loses a reading (buffer file) |
 | [`python/examples/commands.py`](python/examples/commands.py) | Pump, lamp and text commands from HydroNode |
+| [`python/examples/choice_and_state.py`](python/examples/choice_and_state.py) | A heater mode and a pump set from HydroNode, reporting their state |
 | [`python/examples/micropython_esp32.py`](python/examples/micropython_esp32.py) | MicroPython on ESP32 / Pico W: WiFi, NTP, verified TLS |
 | [`python/examples/micropython_collect_hourly.py`](python/examples/micropython_collect_hourly.py) | Battery: measure every 6 min, send 10 readings once an hour, deep sleep |
 | [`node/examples/send.mjs`](node/examples/send.mjs) | One reading from Node.js |
