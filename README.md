@@ -173,6 +173,25 @@ bash shell/test.sh
 
 CI runs all of them on every push ([`.github/workflows/test.yml`](.github/workflows/test.yml)).
 
+## Without signing: JSON push
+
+The SDK speaks the signed device protocol. If a script, Node-RED, Telegraf or a weather station can only send JSON to a
+URL, use a **JSON push interface** instead (HydroNode › Operations › Interfaces › New › JSON push). It gives one URL with
+its own token (`hpi_…`); no signature, no timestamp:
+
+```bash
+curl -X POST "https://hydronode.tech/api/ingest/v1/push/hpi_…" \
+  -H 'Content-Type: application/json' \
+  -d '{"station":"north","temp":12.5,"wind":3.1}'
+```
+
+- Several devices on one URL: set an **id field** on the interface (here `station`). Each value of it becomes its own
+  discovered device ("north", "south"); the id field itself is never a value.
+- New devices and fields show up as discovered in your project; **Add** turns them into a sensor with data points.
+- Older push URLs of a single sensor (`hpt_…`) keep working unchanged.
+- Same path takes the token as header too: `X-Push-Token: hpi_…` or `Authorization: Bearer hpi_…` on
+  `POST /api/ingest/v1/push`.
+
 ## Related
 
 - [HydroNode](https://hydronode.tech/) · [Docs](https://hydronode.tech/docs/) · [Sensor types](https://hydronode.tech/docs/guide/sensor-types/)
