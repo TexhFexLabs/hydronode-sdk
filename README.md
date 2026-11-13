@@ -31,8 +31,8 @@ On an ESP32 or ESP8266 with Arduino, use the [HydroNode Arduino library](https:/
 
 ## Quick start
 
-1. Create a sensor in [HydroNode](https://hydronode.tech/) and copy **Sensor ID** and **Secret** from
-   *Settings → Connection*.
+1. In [HydroNode](https://hydronode.tech/) add a sensor (**+ › Sensor › Own firmware**) and copy **Sensor ID**
+   and **Secret** from *Settings › Connection*.
 2. Pick your language, copy one file, send:
 
 | You have | Copy | Needs |
@@ -160,6 +160,10 @@ backend's `SignatureVectorsTest`; do not edit it by hand.
 | [`node/examples/gateway.mjs`](node/examples/gateway.mjs) | Forward readings from anywhere, buffered to a file, with commands |
 | [`go/examples/send/main.go`](go/examples/send/main.go) | One reading and a command handler in Go |
 | [`shell/hydronode.sh`](shell/hydronode.sh) `dry-run` | Shows what would be signed, to debug a 401 |
+| [`python/examples/json_push.py`](python/examples/json_push.py) | JSON push without signing, standard library only |
+| [`node/examples/json_push.mjs`](node/examples/json_push.mjs) | JSON push without signing from Node.js |
+| [`python/examples/mqtt_switch.py`](python/examples/mqtt_switch.py) | A pump on MQTT that HydroNode switches, reporting its state (needs `paho-mqtt`) |
+| [`docs/lorawan-downlinks.md`](docs/lorawan-downlinks.md) | Downlinks to a LoRaWAN device through its interface, from the web app or a script |
 
 ## Running the tests
 
@@ -176,8 +180,8 @@ CI runs all of them on every push ([`.github/workflows/test.yml`](.github/workfl
 ## Without signing: JSON push
 
 The SDK speaks the signed device protocol. If a script, Node-RED, Telegraf or a weather station can only send JSON to a
-URL, use a **JSON push interface** instead (HydroNode › Operations › Interfaces › New › JSON push). It gives one URL with
-its own token (`hpi_…`); no signature, no timestamp:
+URL, use a **JSON push interface** instead (HydroNode › Operations › Interfaces › **Add interface** › JSON push). It
+gives one URL with its own token (`hpi_…`); no signature, no timestamp:
 
 ```bash
 curl -X POST "https://hydronode.tech/api/ingest/v1/push/hpi_…" \
@@ -185,12 +189,38 @@ curl -X POST "https://hydronode.tech/api/ingest/v1/push/hpi_…" \
   -d '{"station":"north","temp":12.5,"wind":3.1}'
 ```
 
-- Several devices on one URL: set an **id field** on the interface (here `station`). Each value of it becomes its own
-  discovered device ("north", "south"); the id field itself is never a value.
+- JSON objects or form data (`application/x-www-form-urlencoded`), up to 64 KB, 60 requests per minute per interface.
+  An optional `timestamp` field (or `?at=`) sets the measurement time, up to 7 days back.
+- Several devices on one URL: set a **Device field** on the interface (here `station`). Each value of it becomes its
+  own discovered device ("north", "south"); the field itself is never a value.
 - New devices and fields show up as discovered in your project; **Add** turns them into a sensor with data points.
 - Older push URLs of a single sensor (`hpt_…`) keep working unchanged.
 - Same path takes the token as header too: `X-Push-Token: hpi_…` or `Authorization: Bearer hpi_…` on
   `POST /api/ingest/v1/push`.
+
+Examples: [`python/examples/json_push.py`](python/examples/json_push.py), [`node/examples/json_push.mjs`](node/examples/json_push.mjs).
+
+## Without signing: MQTT
+
+Devices, Home Assistant, Zigbee2MQTT, Tasmota, Shelly or your own broker can publish to HydroNode over MQTT
+(HydroNode › Operations › Interfaces › **Add interface** › MQTT). The interface gives a username and a secret
+(shown once) for `mqtts://mqtt.hydronode.tech:8883` or `wss://mqtt.hydronode.tech/mqtt`, MQTT 3.1.1 or 5.
+
+- Your account owns the topic area `hn/<short>/#`; publish and subscribe only inside it. In HydroNode topics are
+  relative to it (`zigbee2mqtt/bed` = `hn/<short>/zigbee2mqtt/bed`).
+- Zigbee2MQTT, Tasmota, Shelly and Home Assistant discovery are recognised and offered as devices with their
+  switches; every other topic with a JSON object or a single value shows up as a discovered device too.
+- A data point can switch back: in its settings under Command, turn on **Publish over MQTT when it is set** with a
+  topic and the On/Off payloads. HydroNode shows the change as *Pending* until the device reports the new state.
+- A Mosquitto at home can bridge to HydroNode: **Bridge for your broker** on the interface gives the config.
+
+Example: [`python/examples/mqtt_switch.py`](python/examples/mqtt_switch.py), a pump that HydroNode switches and that
+reports its real state.
+
+## LoRaWAN
+
+LoRaWAN devices reach HydroNode through the network server (TTN, ChirpStack, Helium) and a **LoRaWAN interface**.
+Downlinks back to the device go through the same interface: [`docs/lorawan-downlinks.md`](docs/lorawan-downlinks.md).
 
 ## Related
 
