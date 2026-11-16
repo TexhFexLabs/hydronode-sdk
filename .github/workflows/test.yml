@@ -18,14 +18,14 @@ jobs:
   python:
     name: Python ${{ matrix.python }}
     runs-on: ubuntu-latest
+    # The official images: setup-python has no 3.8 for the current Ubuntu runner, the README promises 3.8+.
+    container: python:${{ matrix.python }}-slim
     strategy:
+      fail-fast: false
       matrix:
         python: ["3.8", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python }}
       - run: python3 python/test_hydronode.py
 
   micropython:
@@ -40,6 +40,7 @@ jobs:
     name: Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node: ["18", "22", "24"]
     steps:
